@@ -15,6 +15,7 @@ const HistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryVersion, setCategoryVersion] = useState(0);
 
   // Get year and month from URL params, default to current date if not provided
   const getInitialYearMonth = () => {
@@ -89,6 +90,7 @@ const HistoryPage: React.FC = () => {
   const handleAddCategory = async (name: string) => {
     try {
       await createCategory(name);
+      setCategoryVersion((version) => version + 1);
       setIsCategoryModalOpen(false);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -207,6 +209,7 @@ const HistoryPage: React.FC = () => {
         title="Add New Expense"
       >
         <ExpenseForm
+          key={categoryVersion}
           onSubmit={handleAddExpense}
           onCancel={() => setIsModalOpen(false)}
         />
