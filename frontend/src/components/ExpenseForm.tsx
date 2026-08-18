@@ -59,6 +59,7 @@ export function ExpenseForm({
     value: category,
     label: category,
   }));
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <form onSubmit={handleSubmit} style={formStyle}>
@@ -98,6 +99,7 @@ export function ExpenseForm({
       <TextField
         label="Date"
         type="date"
+        max={today}
         value={formData.date}
         onChange={(e) => handleChange("date", e.target.value)}
         error={errors.date}
