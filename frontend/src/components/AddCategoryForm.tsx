@@ -33,7 +33,6 @@ export const AddCategoryForm: React.FC<AddCategoryFormProps> = ({
     try {
       await onSubmit(categoryName.trim());
       setCategoryName("");
-      alert("Category created successfully!");
     } catch (err) {
       setError("Failed to create category. It may already exist.");
     } finally {
