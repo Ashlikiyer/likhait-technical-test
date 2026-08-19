@@ -2,12 +2,20 @@
  * Calendar expense table component - Responsive Design with Tailwind
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Expense, ExpenseFormData } from "../types";
 import { formatCurrency, formatDate } from "../utils/expenseUtils";
 import { ExpenseForm } from "./ExpenseForm.tsx";
 import { deleteExpense, updateExpense } from "../services/api";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
 import { useToast } from "./Toast";
 import {
   Dialog,
@@ -33,7 +41,7 @@ interface CalendarExpenseTableProps {
   onExpenseUpdated: (updatedExpenses: Expense[]) => void;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 5;
 
 export function CalendarExpenseTable({
   expenses,
@@ -47,10 +55,21 @@ export function CalendarExpenseTable({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { showToast } = useToast();
 
-  const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(expenses.length / ITEMS_PER_PAGE));
+
+  // Sort the complete collection before slicing so every page follows the
+  // same newest-first order.
+  const sortedExpenses = [...expenses].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentExpenses = expenses.slice(startIndex, endIndex);
+  const currentExpenses = sortedExpenses.slice(startIndex, endIndex);
+
+  // Keep the current page valid after deleting records or changing filters.
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const handleEdit = (expense: Expense) => {
     // Don't allow editing if expense is still being created
@@ -139,10 +158,8 @@ export function CalendarExpenseTable({
     0
   );
 
-  // Sort expenses by date descending
-  const sortedExpenses = [...currentExpenses].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const firstVisibleExpense = expenses.length === 0 ? 0 : startIndex + 1;
+  const lastVisibleExpense = Math.min(endIndex, expenses.length);
 
   return (
     <div className="w-full space-y-4">
@@ -185,7 +202,7 @@ export function CalendarExpenseTable({
                 </TableCell>
               </TableRow>
             ) : (
-              sortedExpenses.map((expense) => (
+              currentExpenses.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell className="font-medium">{formatDate(new Date(expense.date))}</TableCell>
                   <TableCell className="max-w-xs truncate">{expense.description}</TableCell>
@@ -238,7 +255,7 @@ className="inline-flex size-8 items-center justify-center border-0 bg-transparen
         {sortedExpenses.length === 0 ? (
           <div className="px-4 py-8 text-center text-gray-500">No expenses</div>
         ) : (
-          sortedExpenses.map((expense) => (
+          currentExpenses.map((expense) => (
             <div key={expense.id} className="p-4 shadow-[0_1px_3px_rgba(148,163,184,0.12)] hover:bg-gray-50 transition-colors">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -280,26 +297,47 @@ className="inline-flex size-10 items-center justify-center border-0 bg-transpare
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-      <div className="px-4 sm:px-6 py-4 shadow-[0_-1px_3px_rgba(148,163,184,0.12)] bg-muted/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+      {expenses.length > 0 && totalPages > 1 && (
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-3 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-center text-sm text-slate-600 sm:text-left">
+            Showing {firstVisibleExpense}-{lastVisibleExpense} of {expenses.length} expenses
+            <span className="ml-2 text-slate-500">(5 per page)</span>
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border-0 rounded text-foreground shadow-[0_1px_3px_rgba(148,163,184,0.18)] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border-0 rounded text-foreground shadow-[0_1px_3px_rgba(148,163,184,0.18)] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-            >
-              Next
-            </button>
+          <div className="flex flex-col items-center gap-2 sm:flex-row">
+            <span className="whitespace-nowrap text-sm font-medium text-slate-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (currentPage > 1) setCurrentPage((page) => page - 1);
+                    }}
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#" isActive onClick={(event) => event.preventDefault()}>
+                    {currentPage}
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (currentPage < totalPages) setCurrentPage((page) => page + 1);
+                    }}
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       )}
