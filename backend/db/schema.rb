@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_08_18_000004) do
+ActiveRecord::Schema[7.2].define(version: 2026_08_19_000005) do
   create_table "categories", id: :integer, charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name", limit: 100, null: false
     t.timestamp "created_at", default: -> { "CURRENT_TIMESTAMP" }
@@ -29,7 +29,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_08_18_000004) do
     t.timestamp "updated_at", default: -> { "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" }
     t.date "date", null: false
     t.index ["category_id"], name: "idx_category_id"
+    t.index ["category_id"], name: "index_expenses_on_category_id"
     t.index ["created_at"], name: "idx_created_at"
+    t.index ["date", "category_id"], name: "index_expenses_on_date_and_category_id"
+    t.index ["date"], name: "index_expenses_on_date"
   end
 
   add_foreign_key "expenses", "categories", name: "expenses_ibfk_1"

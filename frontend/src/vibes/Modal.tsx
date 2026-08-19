@@ -11,6 +11,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   maxWidth?: string;
+  unstyled?: boolean;
 }
 
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   title,
   children,
   maxWidth = "500px",
+  unstyled = false,
 }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -53,16 +55,21 @@ export function Modal({
     zIndex: 1000,
   };
 
-  const modalStyle: React.CSSProperties = {
-    backgroundColor: COLORS.background.main,
-    borderRadius: "0.5rem",
-    padding: "1.5rem",
-    maxWidth,
-    width: "90%",
-    maxHeight: "90vh",
-    overflow: "auto",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  };
+  const modalStyle: React.CSSProperties = unstyled
+    ? {
+        maxWidth,
+        width: "90%",
+        maxHeight: "90vh",
+      }
+    : {
+        backgroundColor: COLORS.background.main,
+        borderRadius: "0.5rem",
+        maxWidth,
+        width: "90%",
+        maxHeight: "90vh",
+        overflow: "auto",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+      };
 
   const headerStyle: React.CSSProperties = {
     display: "flex",
