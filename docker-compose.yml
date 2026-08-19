@@ -44,6 +44,8 @@ services:
       DATABASE_NAME: expense_system_development
       DATABASE_USERNAME: expense_user
       DATABASE_PASSWORD: expense_password
+      BUNDLE_APP_CONFIG: /tmp/bundle-config
+      BUNDLE_PATH: /usr/local/bundle
     ports:
       - "3000:3000"
     depends_on:
@@ -54,7 +56,6 @@ services:
       - backend_gems:/usr/local/bundle
     command: >
       sh -c "
-         bundle install &&
          rm -f /rails/tmp/pids/server.pid &&
          bundle exec puma -C config/puma.rb
       "
