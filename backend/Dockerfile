@@ -15,9 +15,13 @@ RUN apt-get update -qq && \
 # Install application gems
 COPY Gemfile Gemfile.lock ./
 
-# Configure bundler and install gems with retry logic
-RUN bundle config set --local deployment 'false' && \
-    bundle config set --local path 'vendor/bundle' && \
+# Keep the Bundler version aligned with the Gemfile.lock metadata.
+RUN gem install bundler -v 2.6.8 --no-document
+
+# Configure Bundler to use the Linux container volume rather than the
+# Windows bind-mounted source tree.
+RUN bundle config set --global deployment 'false' && \
+    bundle config set --global path '/usr/local/bundle' && \
     bundle install --jobs 4 --retry 3
 
 # Copy application code

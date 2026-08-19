@@ -1,6 +1,6 @@
 class AddDateToExpenses < ActiveRecord::Migration[7.2]
   def up
-    add_column :expenses, :date, :date
+    add_column :expenses, :date, :date unless column_exists?(:expenses, :date)
 
     execute <<~SQL
       UPDATE expenses
