@@ -10,6 +10,7 @@ import { COLORS } from "../constants/colors";
 import { Button, Modal, Pagination } from "../vibes";
 import { ExpenseForm } from "./ExpenseForm.tsx";
 import { deleteExpense, updateExpense } from "../services/api";
+import { useToast } from "./Toast";
 
 interface CalendarExpenseTableProps {
   expenses: Expense[];
@@ -27,6 +28,7 @@ export function CalendarExpenseTable({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -50,9 +52,10 @@ export function CalendarExpenseTable({
       setIsDeleteModalOpen(false);
       setDeletingExpense(null);
       onExpenseUpdated();
+      showToast("Expense deleted successfully.", "success");
     } catch (error) {
       console.error("Failed to delete expense:", error);
-      alert("Failed to delete expense");
+      showToast("Failed to delete expense. Please try again.", "error");
     }
   };
 
@@ -63,8 +66,10 @@ export function CalendarExpenseTable({
       setIsEditModalOpen(false);
       setEditingExpense(null);
       onExpenseUpdated();
+      showToast("Expense updated successfully.", "success");
     } catch (error) {
       console.error("Failed to update expense:", error);
+      showToast("Failed to update expense. Please try again.", "error");
       throw error;
     }
   };

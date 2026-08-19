@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getExpenses, createExpense, createCategory } from "../services/api";
+import { useToast } from "../components/Toast";
 import { Expense, ExpenseFormData } from "../types";
 import YearNavigation from "../components/YearNavigation";
 import { MonthNavigation } from "../components/MonthNavigation";
@@ -13,6 +14,8 @@ import { COLORS } from "../constants/colors";
 const HistoryPage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const { showToast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryVersion, setCategoryVersion] = useState(0);
@@ -55,10 +58,13 @@ const HistoryPage: React.FC = () => {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
+      setLoadError("");
       const data = await getExpenses(selectedYear, selectedMonth);
       setExpenses(data);
     } catch (error) {
       console.error("Error fetching expenses:", error);
+      setLoadError("We couldn't load your expenses. Please try again.");
+      showToast("Unable to load expenses.", "error");
     } finally {
       setLoading(false);
     }
@@ -79,10 +85,10 @@ const HistoryPage: React.FC = () => {
       await createExpense(data);
       setIsModalOpen(false);
       await fetchExpenses();
-      alert("Expense created successfully!");
+      showToast("Expense created successfully.", "success");
     } catch (error) {
       console.error("Error creating expense:", error);
-      alert("Failed to create expense. Please try again.");
+      showToast("Failed to create expense. Please try again.", "error");
       throw error;
     }
   };
@@ -92,8 +98,10 @@ const HistoryPage: React.FC = () => {
       await createCategory(name);
       setCategoryVersion((version) => version + 1);
       setIsCategoryModalOpen(false);
+      showToast("Category created successfully.", "success");
     } catch (error) {
       console.error("Error creating category:", error);
+      showToast("Failed to create category. It may already exist.", "error");
       throw error;
     }
   };
@@ -185,7 +193,40 @@ const HistoryPage: React.FC = () => {
 
       <div>
         {loading ? (
-          <div style={loadingStyle}>Loading...</div>
+          <div style={loadingStyle} role="status">
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-block",
+                width: "20px",
+                height: "20px",
+                marginRight: "10px",
+                border: `3px solid ${COLORS.secondary.s04}`,
+                borderTopColor: COLORS.primary.p06,
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            Loading your expenses...
+          </div>
+        ) : loadError ? (
+          <div
+            role="alert"
+            style={{
+              marginTop: "32px",
+              padding: "24px",
+              color: COLORS.red.re07,
+              background: COLORS.red.re02,
+              border: `1px solid ${COLORS.red.re04}`,
+              borderRadius: "12px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ margin: "0 0 16px", fontWeight: 600 }}>{loadError}</p>
+            <Button variant="secondary" onClick={fetchExpenses}>
+              Try again
+            </Button>
+          </div>
         ) : (
           <>
             <CategoryBreakdown
