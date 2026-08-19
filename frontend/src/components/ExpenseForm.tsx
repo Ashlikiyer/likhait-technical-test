@@ -2,11 +2,15 @@
  * Form component for adding/editing expenses
  */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ExpenseFormData } from "../types";
 import { fetchCategories } from "../services/api";
-import { TextField, SelectBox, Button } from "../vibes";
 import { useExpenseForm } from "../hooks/useExpenseForm";
+import { Button } from "./ui/button";
+import { Field, FieldGroup } from "./ui/field";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { CategorySelect } from "./ui/category-select";
 
 interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
@@ -33,8 +37,7 @@ export function ExpenseForm({
     const loadCategories = async () => {
       try {
         const categoryData = await fetchCategories();
-        const categoryNames = categoryData.map((cat) => cat.name).sort();
-        setCategories(categoryNames);
+        setCategories(categoryData.map((category) => category.name).sort());
       } catch (error) {
         console.error("Failed to load categories:", error);
       }
@@ -43,79 +46,87 @@ export function ExpenseForm({
     loadCategories();
   }, []);
 
-  const formStyle: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  };
-
-  const buttonGroupStyle: React.CSSProperties = {
-    display: "flex",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
-  };
-
-  const categoryOptions = categories.map((category) => ({
-    value: category,
-    label: category,
-  }));
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <form onSubmit={handleSubmit} style={formStyle}>
-      <TextField
-        label="Amount"
-        type="number"
-        step="0.01"
-        placeholder="0.00"
-        value={formData.amount}
-        onChange={(e) => handleChange("amount", e.target.value)}
-        error={errors.amount}
-        fullWidth
-        required
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <FieldGroup className="sm:grid sm:grid-cols-2">
+        <Field>
+          <Label htmlFor="expense-amount">Amount</Label>
+          <Input
+            id="expense-amount"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={formData.amount}
+            onChange={(e) => handleChange("amount", e.target.value)}
+            aria-invalid={Boolean(errors.amount)}
+            required
+          />
+          {errors.amount && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.amount}
+            </p>
+          )}
+        </Field>
 
-      <TextField
-        label="Description"
-        type="text"
-        placeholder="Enter description"
-        value={formData.description}
-        onChange={(e) => handleChange("description", e.target.value)}
-        error={errors.description}
-        fullWidth
-        required
-      />
+        <Field>
+          <Label htmlFor="expense-date">Date</Label>
+          <Input
+            id="expense-date"
+            type="date"
+            max={today}
+            value={formData.date}
+            onChange={(e) => handleChange("date", e.target.value)}
+            aria-invalid={Boolean(errors.date)}
+            className="bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white"
+            required
+          />
+          {errors.date && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.date}
+            </p>
+          )}
+        </Field>
 
-      <SelectBox
-        label="Category"
-        options={categoryOptions}
-        value={formData.category}
-        onChange={(e) => handleChange("category", e.target.value)}
-        error={errors.category}
-        fullWidth
-        required
-      />
+        <Field className="sm:col-span-2">
+          <Label htmlFor="expense-description">Description</Label>
+          <Input
+            id="expense-description"
+            type="text"
+            placeholder="What was this expense for?"
+            value={formData.description}
+            onChange={(e) => handleChange("description", e.target.value)}
+            aria-invalid={Boolean(errors.description)}
+            required
+          />
+          {errors.description && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.description}
+            </p>
+          )}
+        </Field>
 
-      <TextField
-        label="Date"
-        type="date"
-        max={today}
-        value={formData.date}
-        onChange={(e) => handleChange("date", e.target.value)}
-        error={errors.date}
-        fullWidth
-        required
-      />
+        <Field className="sm:col-span-2">
+          <Label htmlFor="expense-category">Category</Label>
+          <CategorySelect
+            id="expense-category"
+            value={formData.category}
+            options={categories}
+            onChange={(value) => handleChange("category", value)}
+            aria-invalid={Boolean(errors.category)}
+            required
+          />
+          {errors.category && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.category}
+            </p>
+          )}
+        </Field>
+      </FieldGroup>
 
-      <div style={buttonGroupStyle}>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={isSubmitting}
-          fullWidth
-        >
-          {isSubmitting ? "Submitting..." : submitLabel}
-        </Button>
+      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
         {onCancel && (
           <Button
             type="button"
@@ -126,6 +137,9 @@ export function ExpenseForm({
             Cancel
           </Button>
         )}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : submitLabel}
+        </Button>
       </div>
     </form>
   );
